@@ -3,6 +3,8 @@
 YouTube の動画 URL を貼り付けるだけで、動画（MP4）や音声（M4A / MP3）を保存できる Web アプリです。
 iPhone の Safari で使いやすいように作っています。
 
+> **PC なしで iPhone だけで使いたい場合**は、[iPhone だけで使う版（a-Shell ＋ ショートカット）](iphone/README.md) を見てください。
+
 ![画面](docs/screenshot.png)
 
 ## できること

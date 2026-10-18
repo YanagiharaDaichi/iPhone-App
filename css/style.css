@@ -1,0 +1,553 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --text: #16181d;
+  --text-2: #5d6370;
+  --border: #dfe2e7;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-text: #ffffff;
+  --accent-soft: #e8efff;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+  --radius: 14px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+    "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #171a20;
+    --surface-2: #22262e;
+    --text: #eceef2;
+    --text-2: #9aa1ad;
+    --border: #2b3039;
+    --accent: #6b97ff;
+    --accent-hover: #86aaff;
+    --accent-text: #0b1020;
+    --accent-soft: #1c2742;
+    --danger: #ff8a7a;
+    --danger-soft: #2a1715;
+    --shadow: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+a {
+  color: var(--accent);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.app-header,
+main,
+.app-footer {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding-inline: 16px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 14px 6px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.app-footer {
+  padding-block: 32px 24px;
+  color: var(--text-2);
+  font-size: 12px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ボタン */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.button:hover {
+  background: var(--surface-2);
+}
+
+.button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.button.primary:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.button:focus-visible,
+.icon-button:focus-visible,
+a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.icon-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* 画像の選択 */
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.notice p {
+  margin: 0;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 28px 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.picker.dragging {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.picker.has-image {
+  padding-top: 16px;
+  border-style: solid;
+}
+
+.preview {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.picker-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.picker-hint {
+  margin: -6px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.picker-actions .button {
+  min-width: 140px;
+}
+
+.camera-only {
+  display: none;
+}
+
+/* スマートフォンではカメラボタンを出し、ドロップ・貼り付けの案内は隠す */
+@media (pointer: coarse) {
+  .camera-only {
+    display: inline-flex;
+  }
+
+  .picker-hint {
+    display: none;
+  }
+}
+
+/* 状態表示 */
+
+#status:not(:empty) {
+  margin-top: 20px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--text-2);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.message {
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.message.error {
+  background: var(--danger-soft);
+  box-shadow: none;
+}
+
+.message-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.message.error .message-title {
+  color: var(--danger);
+}
+
+.message-body {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* 検索結果 */
+
+.result-section {
+  margin-top: 28px;
+}
+
+.result-section h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.count {
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chip:hover {
+  text-decoration: underline;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.grid-item {
+  display: block;
+  border-radius: 10px;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.grid-item:hover .thumb img {
+  transform: scale(1.04);
+}
+
+/* 読み込めなかった画像は写真アイコンにする */
+.thumb.broken img {
+  display: none;
+}
+
+.thumb.broken::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 40%;
+  height: 40%;
+  max-width: 32px;
+  max-height: 32px;
+  background: var(--text-2);
+  opacity: 0.5;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v9.6l3.3-3.3a1 1 0 0 1 1.4 0l2.8 2.8 1.8-1.8a1 1 0 0 1 1.4 0L19 16.6V6H5Zm10 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v9.6l3.3-3.3a1 1 0 0 1 1.4 0l2.8 2.8 1.8-1.8a1 1 0 0 1 1.4 0L19 16.6V6H5Zm10 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.pages {
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.page {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.page + .page {
+  border-top: 1px solid var(--border);
+}
+
+.page:hover {
+  background: var(--surface-2);
+}
+
+.page .thumb {
+  flex: none;
+  width: 56px;
+  border-radius: 8px;
+}
+
+.page-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.page-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.page-host {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 設定ダイアログ */
+
+dialog {
+  width: min(100% - 32px, 440px);
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+dialog h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+}
+
+dialog label {
+  font-weight: 600;
+}
+
+dialog input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  /* iOS Safari が入力時に拡大しないよう 16px 以上にする */
+  font: inherit;
+  font-size: 16px;
+}
+
+dialog input:focus {
+  border-color: var(--accent);
+  outline: 3px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.help {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+details {
+  font-size: 13px;
+}
+
+summary {
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+details ol {
+  margin: 8px 0 0;
+  padding-left: 1.3em;
+  color: var(--text-2);
+}
+
+details li + li {
+  margin-top: 4px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}

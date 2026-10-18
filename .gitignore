@@ -1,8 +1,2 @@
-# Xcode
-xcuserdata/
-DerivedData/
-*.xcuserstate
-build/
-
-# macOS
+node_modules/
 .DS_Store

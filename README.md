@@ -1,70 +1,75 @@
-# 類似画像検索 (ImageSearch)
+# 類似画像検索
 
-写真を選ぶ(または撮影する)と、その画像に似た画像や、同じ画像が掲載されているウェブページをネット上から探す iPhone アプリです。
+画像をアップロードすると、その画像に似た画像や、同じ画像が掲載されているウェブページをネット上から探す Web アプリです。
 検索には [Google Cloud Vision API の Web 検出](https://cloud.google.com/vision/docs/detecting-web) を使っています。
+
+サーバーは不要で、HTML / CSS / JavaScript だけで動きます(ビルドも不要)。iPhone の Safari でも PC のブラウザでも使えます。
 
 ## 機能
 
-- フォトライブラリから画像を選ぶ / カメラで撮影する → 自動で検索
+- 画像の入力: 写真を選ぶ / 撮影する(スマートフォン) / ドラッグ&ドロップ / 貼り付け(Ctrl+V・⌘V)
 - 検索結果
-  - **キーワード**: 画像から推定された名前や関連語(タップすると Google 画像検索)
+  - **キーワード**: 画像から推定された名前や関連語(クリックで Google 画像検索)
   - **類似画像**: 見た目が似ている画像
   - **同じ画像**: 完全一致・部分一致する画像
   - **この画像が掲載されているページ**: 同じ画像を使っているウェブページ
-- 結果をタップするとアプリ内ブラウザで開く
-- API キーは端末のキーチェーンに保存
+- ダークモード対応
 
-## 必要なもの
+## 使い方
 
-- Xcode 16 以降
-- iOS 17 以降
-- Google Cloud のアカウントと、Cloud Vision API の API キー
+1. ページを開く
+2. 右上の歯車から Google Cloud Vision API の API キーを貼り付けて保存する
+3. 「写真を選ぶ」で画像を選ぶと、自動で検索される
 
-## セットアップ
-
-### 1. API キーを用意する
+## API キーを用意する
 
 1. [Google Cloud コンソール](https://console.cloud.google.com/) でプロジェクトを作成し、課金を有効にする
 2. [Cloud Vision API](https://console.cloud.google.com/apis/library/vision.googleapis.com) を有効にする
-3. [認証情報](https://console.cloud.google.com/apis/credentials) で API キーを作成する
+3. [認証情報](https://console.cloud.google.com/apis/credentials) で「API キー」を作成する
 4. (推奨)作成したキーに制限をかける
-   - **アプリケーションの制限**: 「iOS アプリ」を選び、バンドル ID `com.yanagiharadaichi.ImageSearch` を登録
+   - **アプリケーションの制限**: 「ウェブサイト」を選び、公開するページのアドレスを登録する
+     (例: `https://yanagiharadaichi.github.io/*`。手元で試すなら `http://localhost:8000/*` も)
    - **API の制限**: 「Cloud Vision API」のみに制限
 
 Web 検出は毎月 1,000 回まで無料で、それを超えると有料です。詳しくは [料金ページ](https://cloud.google.com/vision/pricing) を確認してください。
 
-### 2. アプリを実行する
+## 公開する(GitHub Pages)
 
-1. `ImageSearch.xcodeproj` を Xcode で開く
-2. 実機で動かす場合は、ターゲット「ImageSearch」の **Signing & Capabilities** で自分の Team を選ぶ
-   (バンドル ID が重複してエラーになる場合は変更し、API キーの制限に登録したものも合わせて変更する)
-3. 実行(⌘R)
-4. 右上の歯車から API キーを貼り付けて保存する
+1. GitHub のリポジトリで **Settings → Pages** を開く
+2. **Source** を「Deploy from a branch」にし、ブランチ(例: `main`)と `/ (root)` を選んで保存する
+3. 数分後に `https://yanagiharadaichi.github.io/iPhone-App/` で開けるようになる
+
+非公開リポジトリで GitHub Pages を使うには有料プランが必要です。Netlify や Cloudflare Pages など、静的サイトを置ける場所ならどこでも動きます。
+
+## 手元で動かす
+
+```sh
+npm start   # = python3 -m http.server 8000
+```
+
+ブラウザで http://localhost:8000 を開きます。
+JavaScript モジュールを使っているため、`index.html` をファイルとして直接開くと動きません。
+
+## テスト
+
+```sh
+npm test
+```
+
+Node.js 18 以降が必要です(追加のパッケージは不要)。
 
 ## 構成
 
 ```
-ImageSearch/
-├── ImageSearchApp.swift          アプリのエントリーポイント
-├── Models/WebDetection.swift     Vision API の検索結果
-├── Services/
-│   ├── VisionAPIClient.swift     Vision API へのリクエストと応答の解析
-│   └── APIKeyStore.swift         API キーのキーチェーン保存
-├── ViewModels/SearchViewModel.swift  画像の読み込みと検索の状態管理
-├── Views/
-│   ├── ContentView.swift         メイン画面(画像の選択・撮影)
-│   ├── ResultsView.swift         検索結果
-│   ├── SettingsView.swift        API キーの設定
-│   ├── RemoteThumbnail.swift     ネット上の画像のサムネイル
-│   ├── CameraPicker.swift        カメラ
-│   └── SafariView.swift          アプリ内ブラウザ
-└── Utilities/                    画像の縮小、URL・HTML の補助
-ImageSearchTests/                 ユニットテスト(⌘U で実行)
+index.html        画面
+css/style.css     見た目
+js/app.js         画面の操作(画像の入力・結果の表示・設定)
+js/vision.js      Vision API へのリクエストと応答の解析
+js/image.js       送信前の画像の縮小(長辺 1600px の JPEG)
+tests/            ユニットテスト
 ```
-
-画像は長辺 1600px の JPEG に縮小してから送信します。
 
 ## 補足
 
-- API キーはアプリ内(キーチェーン)に保存され、端末から直接 Google に送信されます。個人利用には十分ですが、App Store で公開する場合はキーをサーバー側に置き、アプリからは自前のサーバーを経由する構成にしてください。
-- App Transport Security のため、`http://` の画像サムネイルは `https://` に置き換えて読み込みます。https に対応していないサイトの画像はアイコン表示になりますが、タップすれば元の画像を開けます。
+- API キーはそのブラウザ内(localStorage)にだけ保存され、検索のときにブラウザから Google へ直接送られます。キーをページのコードに書き込むことはありません。
+- 検索結果のサムネイルは各サイトから直接読み込みます。直リンク対策で表示されない画像もありますが、クリックすれば元の画像を開けます。

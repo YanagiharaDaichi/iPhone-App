@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build iOS app (unsigned)
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      # MLX compiles Metal kernels; Xcode 26 ships the Metal toolchain as a separate component.
+      - name: Install Metal toolchain
+        run: xcodebuild -showComponent MetalToolchain || xcodebuild -downloadComponent MetalToolchain
+
+      - name: Resolve packages
+        run: xcodebuild -resolvePackageDependencies -project LocalLLM.xcodeproj -scheme LocalLLM
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project LocalLLM.xcodeproj \
+            -scheme LocalLLM \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -skipMacroValidation \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log | grep -E "error:|warning: .*LocalLLM/|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log

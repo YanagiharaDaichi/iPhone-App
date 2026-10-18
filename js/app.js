@@ -130,6 +130,16 @@ function renderResults(detection) {
   }
 
   const sections = [];
+  if (detection.pages.length) {
+    sections.push(
+      section(
+        '同じ画像が見つかったサイト',
+        detection.pages.length,
+        [el('div', { class: 'pages' }, detection.pages.map(pageRow))],
+        'タップすると、その画像が載っているページが開きます。',
+      ),
+    );
+  }
   if (detection.keywords.length) {
     sections.push(
       section('キーワード', null, [
@@ -148,35 +158,42 @@ function renderResults(detection) {
   if (detection.similarImages.length) {
     sections.push(section('類似画像', detection.similarImages.length, [imageGrid(detection.similarImages)]));
   }
-  if (detection.matchingImages.length) {
-    sections.push(section('同じ画像', detection.matchingImages.length, [imageGrid(detection.matchingImages)]));
-  }
-  if (detection.pages.length) {
+  if (detection.otherMatchingImages.length) {
     sections.push(
-      section('この画像が掲載されているページ', detection.pages.length, [
-        el(
-          'div',
-          { class: 'pages' },
-          detection.pages.map((page) =>
-            externalLink(page.url, { class: 'page' }, [
-              thumbnail(page.thumbnail),
-              el('span', { class: 'page-text' }, [
-                el('span', { class: 'page-title', text: page.title }),
-                el('span', { class: 'page-host', text: page.host }),
-              ]),
-            ]),
-          ),
-        ),
-      ]),
+      section(
+        'その他の同じ画像',
+        detection.otherMatchingImages.length,
+        [imageGrid(detection.otherMatchingImages)],
+        '掲載ページが分からなかった画像です。タップすると画像そのものが開きます。',
+      ),
     );
   }
   resultsArea.replaceChildren(...sections);
 }
 
-function section(title, count, children) {
+const matchLabels = { full: '完全一致', partial: '一部一致' };
+
+function pageRow(page) {
+  const meta = [el('span', { class: 'page-host', text: page.host })];
+  if (page.match) {
+    meta.unshift(el('span', { class: `badge ${page.match}`, text: matchLabels[page.match] }));
+  }
+  return externalLink(page.url, { class: 'page' }, [
+    thumbnail(page.thumbnail),
+    el('span', { class: 'page-text' }, [
+      el('span', { class: 'page-title', text: page.title }),
+      el('span', { class: 'page-meta' }, meta),
+    ]),
+    el('span', { class: 'page-open', 'aria-hidden': 'true' }),
+  ]);
+}
+
+function section(title, count, children, note) {
   const heading = el('h2', {}, [title]);
   if (count != null) heading.append(el('span', { class: 'count', text: `${count}件` }));
-  return el('section', { class: 'result-section' }, [heading, ...children]);
+  const parts = [heading];
+  if (note) parts.push(el('p', { class: 'section-note', text: note }));
+  return el('section', { class: 'result-section' }, [...parts, ...children]);
 }
 
 function imageGrid(images) {

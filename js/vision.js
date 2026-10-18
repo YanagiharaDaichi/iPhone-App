@@ -95,36 +95,47 @@ export function normalizeWebDetection(web) {
     (text) => text.toLowerCase(),
   );
 
-  const similarImages = toImages(web.visuallySimilarImages);
-  const matchingImages = toImages([
-    ...(web.fullMatchingImages ?? []),
-    ...(web.partialMatchingImages ?? []),
-  ]);
-
+  const imagesOnPages = new Set();
   const pages = uniqueBy(
     (web.pagesWithMatchingImages ?? []).filter((page) => isWebUrl(page.url)),
     (page) => page.url,
   ).map((page) => {
+    const full = (page.fullMatchingImages ?? []).filter((image) => isWebUrl(image.url));
+    const partial = (page.partialMatchingImages ?? []).filter((image) => isWebUrl(image.url));
+    for (const image of [...full, ...partial]) imagesOnPages.add(image.url);
+
     const host = hostOf(page.url);
-    const preview = page.fullMatchingImages?.[0]?.url ?? page.partialMatchingImages?.[0]?.url;
+    const preview = full[0]?.url ?? partial[0]?.url;
     return {
       url: page.url,
       title: stripHtml(page.pageTitle ?? '') || host,
       host,
       thumbnail: preview ? toHttps(preview) : null,
+      // full: 同じ画像(サイズ違いを含む) / partial: 切り抜きや加工をした画像
+      match: full.length ? 'full' : partial.length ? 'partial' : null,
     };
   });
+  // 完全一致のサイトを先に並べる(sort は安定なので API の並び順は保たれる)。
+  const matchRank = { full: 0, partial: 1 };
+  pages.sort((a, b) => (matchRank[a.match] ?? 2) - (matchRank[b.match] ?? 2));
+
+  const similarImages = toImages(web.visuallySimilarImages);
+  // 掲載サイトが分かっている画像はサイトの一覧に出すので、それ以外だけを残す。
+  const otherMatchingImages = toImages([
+    ...(web.fullMatchingImages ?? []),
+    ...(web.partialMatchingImages ?? []),
+  ]).filter((image) => !imagesOnPages.has(image.url));
 
   return {
     keywords,
-    similarImages,
-    matchingImages,
     pages,
+    similarImages,
+    otherMatchingImages,
     isEmpty:
       keywords.length === 0 &&
+      pages.length === 0 &&
       similarImages.length === 0 &&
-      matchingImages.length === 0 &&
-      pages.length === 0,
+      otherMatchingImages.length === 0,
   };
 }
 

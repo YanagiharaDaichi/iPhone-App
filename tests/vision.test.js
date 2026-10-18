@@ -30,8 +30,14 @@ const sampleResponse = {
           {
             url: 'https://example.com/page',
             pageTitle: '<b>Eiffel Tower</b> &amp; Paris',
-            partialMatchingImages: [{ url: 'http://example.com/partial.jpg' }],
+            partialMatchingImages: [{ url: 'https://example.com/partial.jpg' }],
           },
+          {
+            url: 'http://travel.example.jp/paris',
+            pageTitle: 'パリ旅行',
+            fullMatchingImages: [{ url: 'http://travel.example.jp/eiffel.jpg' }],
+          },
+          { url: 'https://no-image.example.net/', pageTitle: '' },
           { url: 'javascript:alert(1)', pageTitle: 'bad' },
         ],
         visuallySimilarImages: [
@@ -100,19 +106,45 @@ describe('parseResponse', () => {
       { url: 'https://example.com/similar1.jpg', thumbnail: 'https://example.com/similar1.jpg' },
       { url: 'http://example.com/similar2.jpg', thumbnail: 'https://example.com/similar2.jpg' },
     ]);
-    assert.deepEqual(
-      result.matchingImages.map((image) => image.url),
-      ['https://example.com/full.jpg', 'https://example.com/partial.jpg'],
-    );
+    assert.equal(result.isEmpty, false);
+  });
+
+  test('同じ画像が見つかったサイトを、完全一致を先にして並べる', () => {
+    const result = parseResponse(JSON.stringify(sampleResponse), 200);
+
     assert.deepEqual(result.pages, [
+      {
+        url: 'http://travel.example.jp/paris',
+        title: 'パリ旅行',
+        host: 'travel.example.jp',
+        thumbnail: 'https://travel.example.jp/eiffel.jpg',
+        match: 'full',
+      },
       {
         url: 'https://example.com/page',
         title: 'Eiffel Tower & Paris',
         host: 'example.com',
         thumbnail: 'https://example.com/partial.jpg',
+        match: 'partial',
+      },
+      {
+        url: 'https://no-image.example.net/',
+        title: 'no-image.example.net',
+        host: 'no-image.example.net',
+        thumbnail: null,
+        match: null,
       },
     ]);
-    assert.equal(result.isEmpty, false);
+  });
+
+  test('掲載サイトが分からない同じ画像だけを別に残す', () => {
+    const result = parseResponse(JSON.stringify(sampleResponse), 200);
+
+    // partial.jpg は example.com/page に載っているので含めない。
+    assert.deepEqual(
+      result.otherMatchingImages.map((image) => image.url),
+      ['https://example.com/full.jpg'],
+    );
   });
 
   test('何も見つからなければ空の結果にする', () => {

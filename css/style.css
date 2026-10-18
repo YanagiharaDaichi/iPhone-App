@@ -12,6 +12,8 @@
   --accent-soft: #e8efff;
   --danger: #b42318;
   --danger-soft: #fef3f2;
+  --success: #067647;
+  --success-soft: #e6f6ee;
   --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
   --radius: 14px;
   --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
@@ -32,6 +34,8 @@
     --accent-soft: #1c2742;
     --danger: #ff8a7a;
     --danger-soft: #2a1715;
+    --success: #5fd49a;
+    --success-soft: #14291f;
     --shadow: none;
   }
 }
@@ -461,12 +465,59 @@ a:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.page-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+}
+
 .page-host {
   overflow: hidden;
   color: var(--text-2);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.badge {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.badge.full {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badge.partial {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+/* 外部サイトが開くことを示す矢印 */
+.page-open {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  background: var(--text-2);
+  opacity: 0.7;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.section-note {
+  margin: -6px 0 10px;
+  color: var(--text-2);
+  font-size: 13px;
 }
 
 /* 設定ダイアログ */

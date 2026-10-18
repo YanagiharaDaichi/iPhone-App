@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>動画ダウンローダー</title>
+  <meta name="description" content="YouTube の URL を貼り付けるだけで、動画や音声を保存できます。">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="動画DL">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <header class="app-header">
+      <img src="/static/icon.svg" alt="" class="app-icon" width="44" height="44">
+      <div>
+        <h1>動画ダウンローダー</h1>
+        <p class="subtitle">YouTube の URL を貼り付けるだけ</p>
+      </div>
+    </header>
+
+    <form id="url-form" class="card" novalidate>
+      <label for="url-input" class="label">動画の URL</label>
+      <div class="input-wrap">
+        <input id="url-input" name="url" type="url" inputmode="url" enterkeyhint="go"
+               placeholder="https://youtu.be/..." autocomplete="off" autocapitalize="off"
+               autocorrect="off" spellcheck="false">
+        <button type="button" id="clear-btn" class="clear-btn" aria-label="入力を消去" hidden>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 6l8 8M14 6l-8 8"/></svg>
+        </button>
+      </div>
+      <div class="button-row">
+        <button type="button" id="paste-btn" class="btn secondary" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4" width="10" height="4" rx="1.5"/><path d="M9 6H6.5A1.5 1.5 0 0 0 5 7.5v12A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 17.5 6H15"/></svg>
+          貼り付け
+        </button>
+        <button type="submit" id="fetch-btn" class="btn primary">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-text">読み込む</span>
+        </button>
+      </div>
+      <div id="form-error" class="message error" role="alert" hidden></div>
+    </form>
+
+    <section id="video-card" class="card" hidden aria-labelledby="video-title">
+      <div class="thumb">
+        <img id="thumb" alt="" referrerpolicy="no-referrer">
+        <span id="duration" class="duration" hidden></span>
+      </div>
+      <h2 id="video-title" class="video-title"></h2>
+      <p id="video-uploader" class="muted"></p>
+
+      <div id="kind-tabs" class="segmented" role="tablist" aria-label="保存する形式">
+        <button type="button" role="tab" id="tab-video" data-kind="video" aria-selected="true">動画</button>
+        <button type="button" role="tab" id="tab-audio" data-kind="audio" aria-selected="false">音声のみ</button>
+      </div>
+      <div id="choices" class="choices" role="radiogroup" aria-label="画質"></div>
+      <p id="codec-hint" class="hint" hidden>H.264 以外の形式は、iPhone の写真アプリなどで再生できない場合があります。</p>
+
+      <button type="button" id="download-btn" class="btn primary block">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>
+        ダウンロード
+      </button>
+    </section>
+
+    <section id="progress-card" class="card" hidden aria-live="polite">
+      <div class="progress-head">
+        <p id="progress-label" class="progress-label">準備中…</p>
+        <p id="progress-percent" class="progress-percent"></p>
+      </div>
+      <div id="progress" class="progress indeterminate" role="progressbar" aria-labelledby="progress-label">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <p id="progress-detail" class="muted small"></p>
+      <button type="button" id="cancel-btn" class="btn ghost block">キャンセル</button>
+    </section>
+
+    <section id="done-card" class="card" hidden aria-live="polite">
+      <div class="done-head">
+        <span class="check" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9"/></svg>
+        </span>
+        <div>
+          <p class="done-title">保存の準備ができました</p>
+          <p id="done-filename" class="muted small"></p>
+        </div>
+      </div>
+      <a id="save-link" class="btn primary block" href="#" download>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>
+        ファイルを保存
+      </a>
+      <p id="ios-hint" class="hint" hidden></p>
+      <button type="button" id="again-btn" class="btn ghost block">別の動画をダウンロード</button>
+    </section>
+
+    <section id="job-error-card" class="card" hidden>
+      <div id="job-error" class="message error" role="alert"></div>
+      <button type="button" id="retry-btn" class="btn secondary block">もう一度試す</button>
+    </section>
+
+    <footer class="footer">
+      <p>自分で投稿した動画や、権利者が保存を許可している動画など、著作権や YouTube の利用規約に反しない範囲でご利用ください。</p>
+    </footer>
+  </main>
+</body>
+</html>

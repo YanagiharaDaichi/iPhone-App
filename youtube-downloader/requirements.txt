@@ -1,0 +1,7 @@
+# YouTube から取得する本体。deno は YouTube の仕組みを解くための JavaScript ランタイム。
+# YouTube の仕様変更に追従するため、うまく動かなくなったら `pip install -U -r requirements.txt` で更新してください。
+yt-dlp[default,deno]>=2026.8.19
+# PC に ffmpeg が入っていない場合に使う ffmpeg (映像と音声の結合・MP3 変換に必要)
+imageio-ffmpeg>=0.6.0
+Flask>=3.0
+waitress>=3.0

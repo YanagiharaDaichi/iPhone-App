@@ -2,7 +2,10 @@ name: Build
 
 on:
   push:
+    branches-ignore: [gh-pages]
+    paths-ignore: ['web/**', '**.md']
   pull_request:
+    paths-ignore: ['web/**', '**.md']
   workflow_dispatch:
 
 permissions:

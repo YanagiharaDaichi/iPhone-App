@@ -13,9 +13,9 @@ iPhone の中だけで動く AI チャットアプリです。モデルを一度
 
 ## Web 版：iPhone だけで使う
 
-`web/` フォルダがそのまま Web アプリです（ビルド不要の静的ファイル）。GitHub Pages などに置き、その URL を iPhone で開きます。
+**URL: https://yanagiharadaichi.github.io/iPhone-App/**
 
-1. iPhone の **Safari** でアプリの URL を開きます。
+1. iPhone の **Safari** で上の URL を開きます。
 2. 画面下の共有ボタン（□↑）→ **「ホーム画面に追加」** → 「追加」。
 3. ホーム画面にできた **「ローカルLLM」** アイコンから開きます（全画面のアプリとして動きます）。
 4. 「モデルを選ぶ」→ **Sarashina2.2 0.5B（おすすめ）** をタップしてダウンロード（約 440MB、Wi-Fi 推奨。完了までアプリを開いたままに）。
@@ -35,6 +35,14 @@ iPhone の中だけで動く AI チャットアプリです。モデルを一度
 どれも小型のため、ネイティブ版のモデルより間違いが多めです（特に事実関係）。重要な内容は確認してください。
 
 エンジンは [wllama](https://github.com/ngxson/wllama)（llama.cpp の WebAssembly/WebGPU 版）です。`web/vendor/` に同梱しているため、外部の CDN には依存しません（変更点は `web/vendor/wllama-3.8.1/PATCHES.md`）。
+
+#### 公開の仕組み
+
+`web/` フォルダがそのまま Web アプリです（ビルド不要の静的ファイル）。その中身だけを `gh-pages` ブランチに置き、GitHub Pages（**Settings → Pages → Deploy from a branch → `gh-pages` / `(root)`**）で配信しています。`web/` を変更したら、次のコマンドで公開内容を更新します。
+
+```sh
+git subtree split --prefix web -b gh-pages && git push origin gh-pages
+```
 
 手元で試すには `python3 -m http.server -d web 8000` を実行し、http://localhost:8000 を開きます。
 

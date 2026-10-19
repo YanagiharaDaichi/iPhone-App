@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """iPhone だけで YouTube の動画・音声を保存する (a-Shell で動かすスクリプト).
 
-    ytdl video [URL]   動画 (MP4) を保存
-    ytdl audio [URL]   音声 (M4A) を保存
-    ytdl mp3 [URL]     音声 (MP3) を保存
-    ytdl setup         初回の準備。yt-dlp の更新にも使う
-    ytdl check         動作環境を確認
-    ytdl clean         保存したファイルを削除
+a-Shell の Documents フォルダ (起動直後の場所。「cd」で戻れる) で実行する:
+
+    python3 bin/ytdl video [URL]   動画 (MP4) を保存
+    python3 bin/ytdl audio [URL]   音声 (M4A) を保存
+    python3 bin/ytdl mp3 [URL]     音声 (MP3) を保存
+    python3 bin/ytdl setup         初回の準備。yt-dlp の更新にも使う
+    python3 bin/ytdl check         動作環境を確認
+    python3 bin/ytdl clean         保存したファイルを削除
 
 URL を省略するとクリップボードの URL を使う。
 保存先は a-Shell の Documents/YouTube (「ファイル」アプリ → このiPhone内 → a-Shell → YouTube)。
@@ -40,6 +42,8 @@ ALLOWED_EXTRACTORS = ['youtube']
 WEBKIT_PLUGIN = 'yt-dlp-apple-webkit-jsi'
 MP3_BITRATE = 192
 MODE_NAMES = {'video': '動画 (MP4)', 'audio': '音声 (M4A)', 'mp3': '音声 (MP3)'}
+# a-Shell では「~」を含むパスが正しく扱われないことがあるため、Documents からの相対パスで案内する
+COMMAND = 'python3 bin/ytdl'
 
 
 class UserError(Exception):
@@ -133,7 +137,7 @@ _ERROR_MESSAGES = [
     (r'Video unavailable|This video is unavailable|has been removed|does not exist',
      '動画が見つかりませんでした。削除されたか、非公開の可能性があります。'),
     (r'HTTP Error 403',
-     'YouTube にダウンロードを拒否されました。「ytdl setup」で更新してから再試行してください。'),
+     f'YouTube にダウンロードを拒否されました。「{COMMAND} setup」で更新してから再試行してください。'),
     (r'timed out|Connection|Temporary failure in name resolution|Network is unreachable|Unable to download',
      '通信エラーが発生しました。電波の良い場所で再試行してください。'),
 ]
@@ -276,7 +280,7 @@ def import_yt_dlp():
     try:
         import yt_dlp
     except ImportError:
-        raise UserError('yt-dlp がまだ入っていません。先に「ytdl setup」を実行してください。') from None
+        raise UserError(f'yt-dlp がまだ入っていません。先に「{COMMAND} setup」を実行してください。') from None
     return yt_dlp
 
 
@@ -339,7 +343,7 @@ def build_options(mode: str, max_height: int = 1080, has_ffmpeg: bool = True) ->
         }
     if mode == 'mp3':
         if not has_ffmpeg:
-            raise UserError('MP3 への変換には ffmpeg が必要です。「ytdl audio」で M4A として保存してください。')
+            raise UserError(f'MP3 への変換には ffmpeg が必要です。「{COMMAND} audio」で M4A として保存してください。')
         return {
             'format': 'ba/b',
             'postprocessors': [
@@ -371,8 +375,8 @@ def _make_announcer(post_processor_class, mode: str):
 def find_output(info: dict, workdir: Path) -> Path:
     for item in info.get('requested_downloads') or []:
         path = item.get('filepath')
-        if path and os.path.isfile(path):
-            return Path(path)
+        if path and (workdir / path).is_file():  # 相対パスなら作業フォルダから、絶対パスならそのまま
+            return workdir / path
     files = [p for p in workdir.iterdir() if p.is_file() and not p.name.endswith(('.part', '.ytdl', '.temp'))]
     if not files:
         raise UserError('ダウンロードしたファイルが見つかりませんでした。')
@@ -400,11 +404,15 @@ def download(mode: str, url_text: str, *, max_height: int = 1080, verbose: bool 
     progress = Progress()
     options.update(base_options(verbose))
     options.update(
-        outtmpl={'default': str(workdir / 'media.%(ext)s')},
+        outtmpl={'default': 'media.%(ext)s'},
         progress_hooks=[progress.on_download],
         postprocessor_hooks=[progress.on_postprocess],
     )
     say(f'{MODE_NAMES[mode]}を保存します。動画の情報を取得しています…')
+    previous_dir = os.getcwd()
+    # a-Shell は長い絶対パスを含むコマンドを正しく扱えないことがある (末尾が切れる) ため、
+    # 作業フォルダに移動して ffmpeg には短い相対パスだけを渡す
+    os.chdir(workdir)
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
             ydl.add_post_processor(_make_announcer(PostProcessor, mode), when='before_dl')
@@ -416,6 +424,7 @@ def download(mode: str, url_text: str, *, max_height: int = 1080, verbose: bool 
     except DownloadError as e:
         raise UserError(*friendly_error(e)) from None
     finally:
+        os.chdir(previous_dir)
         shutil.rmtree(workdir, ignore_errors=True)
     return destination
 
@@ -438,7 +447,12 @@ def open_preview(path: Path) -> bool:
     """a-Shell の view コマンドで、共有ボタン付きのプレビューを開く."""
     if not IS_IOS:
         return False
-    return os.system(f'view "{path}"') == 0
+    previous_dir = os.getcwd()
+    try:
+        os.chdir(path.parent)  # 長い絶対パスを避けて、ファイル名だけを渡す
+        return os.system(f'view "{path.name}"') == 0
+    finally:
+        os.chdir(previous_dir)
 
 
 def clipboard_text() -> str:
@@ -503,7 +517,8 @@ def cmd_setup(args: argparse.Namespace) -> int:
     if not args.no_webkit:
         packages.append(WEBKIT_PLUGIN)
     if pip_install(packages) != 0:
-        raise UserError('インストールに失敗しました。通信状態を確認して、もう一度「ytdl setup」を実行してください。')
+        raise UserError(
+            f'インストールに失敗しました。通信状態を確認して、もう一度「{COMMAND} setup」を実行してください。')
     with contextlib.suppress(OSError):
         os.chmod(__file__, 0o755)  # 「ytdl」だけで起動できるようにする
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
@@ -513,7 +528,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     say('')
     say('準備ができました。')
     say('次は README の手順で、共有メニューから使うショートカットを作ります。')
-    say('試すには、YouTube で動画の URL をコピーしてから「ytdl video」と入力します。')
+    say(f'試すには、YouTube で動画の URL をコピーしてから「{COMMAND} video」と入力します。')
     return 0
 
 
@@ -551,7 +566,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     say(f'・Python: {platform.python_version()}' + (' (a-Shell)' if IS_IOS else ''))
     version = installed_version('yt-dlp')
     if version is None:
-        say('・yt-dlp: 未インストール →「ytdl setup」を実行してください')
+        say(f'・yt-dlp: 未インストール →「{COMMAND} setup」を実行してください')
         return 1
     say(f'・yt-dlp: {version}')
 
@@ -560,7 +575,7 @@ def cmd_check(args: argparse.Namespace) -> int:
         say('・解析スクリプト (yt-dlp-ejs): なし (必要なときに自動で取得します)')
     elif expected_ejs and ejs_version.split('.')[:2] != expected_ejs.split('.')[:2]:
         say(f'・解析スクリプト (yt-dlp-ejs): {ejs_version} '
-            f'(yt-dlp が求める版は {expected_ejs}。「ytdl setup」で直ります)')
+            f'(yt-dlp が求める版は {expected_ejs}。「{COMMAND} setup」で直ります)')
     else:
         say(f'・解析スクリプト (yt-dlp-ejs): {ejs_version}')
 
@@ -604,7 +619,7 @@ def cmd_clean(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog='ytdl',
+        prog=COMMAND,
         description='iPhone だけで YouTube の動画・音声を保存します (a-Shell 用)。',
         epilog='URL を省略するとクリップボードの URL を使います。',
     )
